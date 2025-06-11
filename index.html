@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inspección de Motos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin: 0 auto;
+            max-width: 1200px;
+            transition: all 0.3s ease;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .search-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .cedula-input {
+            padding: 15px 20px;
+            font-size: 18px;
+            border: 3px solid #e1e5e9;
+            border-radius: 15px;
+            width: 300px;
+            max-width: 100%;
+            margin-right: 15px;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .cedula-input:focus {
+            outline: none;
+            border-color: #1e3c72;
+            transform: scale(1.05);
+        }
+        
+        .btn-primary {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(30, 60, 114, 0.3);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1e3c72;
+            transform: scale(1.02);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .moto-inspection {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+            align-items: start;
+        }
+        
+        .moto-diagram {
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 500px;
+        }
+        
+        .moto-svg {
+            width: 100%;
+            height: auto;
+            max-width: 400px;
+            margin: 0 auto;
+            display: block;
+        }
+        
+        .inspection-controls {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .part-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .part-status:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        
+        .part-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .status-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .status-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .status-good {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-good.active {
+            background: #28a745;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .status-bad {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-bad.active {
+            background: #dc3545;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .moto-part {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .moto-part:hover {
+            filter: brightness(1.2);
+            transform: scale(1.05);
+        }
+        
+        .moto-part.good {
+            fill: #28a745;
+        }
+        
+        .moto-part.bad {
+            fill: #dc3545;
+        }
+        
+        .moto-part.neutral {
+            fill: #6c757d;
+        }
+        
+        .save-inspection {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .user-info {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        @media (max-width: 768px) {
+            .moto-inspection {
+                grid-template-columns: 1fr;
+            }
+            
+            .cedula-input {
+                width: 100%;
+                margin-bottom: 15px;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏍️ Sistema de Inspección de Motos</h1>
+        
+        <!-- Búsqueda por cédula -->
+        <div class="search-section">
+            <input type="text" id="cedulaInput" class="cedula-input" placeholder="Ingresa tu cédula" maxlength="15">
+            <button class="btn-primary" onclick="searchByCedula()">🔍 Buscar</button>
+        </div>
+        
+        <!-- Formulario de registro -->
+        <div id="registrationForm" class="hidden">
+            <h2 style="color: #1e3c72; margin-bottom: 20px;">📝 Registro de Usuario</h2>
+            <form id="userForm">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label for="nombre">Nombre Completo:</label>
+                        <input type="text" id="nombre" name="nombre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="telefono">Teléfono:</label>
+                        <input type="tel" id="telefono" name="telefono" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ciudad">Ciudad:</label>
+                        <input type="text" id="ciudad" name="ciudad" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="marcaMoto">Marca de la Moto:</label>
+                        <select id="marcaMoto" name="marcaMoto" required>
+                            <option value="">Selecciona una marca</option>
+                            <option value="Honda">Honda</option>
+                            <option value="Yamaha">Yamaha</option>
+                            <option value="Kawasaki">Kawasaki</option>
+                            <option value="Suzuki">Suzuki</option>
+                            <option value="Bajaj">Bajaj</option>
+                            <option value="KTM">KTM</option>
+                            <option value="TVS">TVS</option>
+                            <option value="Otra">Otra</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="modeloMoto">Modelo:</label>
+                        <input type="text" id="modeloMoto" name="modeloMoto" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 20px;">💾 Registrar Usuario</button>
+            </form>
+        </div>
+        
+        <!-- Inspección de moto -->
+        <div id="inspectionSection" class="hidden">
+            <div class="user-info" id="userInfo"></div>
+            
+            <div class="moto-inspection">
+                <div class="moto-diagram">
+                    <h3 style="text-align: center; margin-bottom: 20px; color: #1e3c72;">🏍️ Selecciona las partes para inspeccionar</h3>
+                    <svg class="moto-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Rueda trasera -->
+                        <circle cx="320" cy="220" r="40" class="moto-part neutral" id="rueda-trasera" onclick="selectPart('rueda-trasera')" stroke="#333" stroke-width="2"/>
+                        <text x="320" y="275" text-anchor="middle" font-size="12" fill="#333">Rueda Trasera</text>
+                        
+                        <!-- Rueda delantera -->
+                        <circle cx="80" cy="220" r="40" class="moto-part neutral" id="rueda-delantera" onclick="selectPart('rueda-delantera')" stroke="#333" stroke-width="2"/>
+                        <text x="80" y="275" text-anchor="middle" font-size="12" fill="#333">Rueda Delantera</text>
+                        
+                        <!-- Chasis -->
+                        <rect x="120" y="180" width="160" height="20" class="moto-part neutral" id="chasis" onclick="selectPart('chasis')" stroke="#333" stroke-width="2" rx="10"/>
+                        <text x="200" y="220" text-anchor="middle" font-size="12" fill="#333">Chasis</text>
+                        
+                        <!-- Motor -->
+                        <rect x="160" y="140" width="80" height="60" class="moto-part neutral" id="motor" onclick="selectPart('motor')" stroke="#333" stroke-width="2" rx="10"/>
+                        <text x="200" y="135" text-anchor="middle" font-size="12" fill="#333">Motor</text>
+                        
+                        <!-- Tanque -->
+                        <ellipse cx="200" cy="100" rx="60" ry="25" class="moto-part neutral" id="tanque" onclick="selectPart('tanque')" stroke="#333" stroke-width="2"/>
+                        <text x="200" y="85" text-anchor="middle" font-size="12" fill="#333">Tanque</text>
+                        
+                        <!-- Manillar -->
+                        <rect x="40" y="120" width="120" height="8" class="moto-part neutral" id="manillar" onclick="selectPart('manillar')" stroke="#333" stroke-width="2" rx="4"/>
+                        <text x="100" y="115" text-anchor="middle" font-size="12" fill="#333">Manillar</text>
+                        
+                        <!-- Asiento -->
+                        <ellipse cx="240" cy="110" rx="40" ry="15" class="moto-part neutral" id="asiento" onclick="selectPart('asiento')" stroke="#333" stroke-width="2"/>
+                        <text x="240" y="95" text-anchor="middle" font-size="12" fill="#333">Asiento</text>
+                        
+                        <!-- Escape -->
+                        <rect x="280" y="160" width="60" height="12" class="moto-part neutral" id="escape" onclick="selectPart('escape')" stroke="#333" stroke-width="2" rx="6"/>
+                        <text x="310" y="155" text-anchor="middle" font-size="12" fill="#333">Escape</text>
+                        
+                        <!-- Faros -->
+                        <circle cx="50" cy="160" r="15" class="moto-part neutral" id="faros" onclick="selectPart('faros')" stroke="#333" stroke-width="2"/>
+                        <text x="50" y="145" text-anchor="middle" font-size="12" fill="#333">Faros</text>
+                        
+                        <!-- Frenos -->
+                        <rect x="65" y="205" width="30" height="8" class="moto-part neutral" id="frenos" onclick="selectPart('frenos')" stroke="#333" stroke-width="2" rx="4"/>
+                        <text x="80" y="200" text-anchor="middle" font-size="12" fill="#333">Frenos</text>
+                    </svg>
+                </div>
+                
+                <div class="inspection-controls">
+                    <h3 style="margin-bottom: 20px; color: #1e3c72;">🔧 Estado de Componentes</h3>
+                    <div id="partStatusList"></div>
+                    
+                    <div class="save-inspection">
+                        <button class="btn-primary" onclick="saveInspection()">💾 Guardar Inspección</button>
+                        <button class="btn-primary" onclick="newSearch()" style="background: linear-gradient(135deg, #6c757d, #495057); margin-left: 10px;">🔄 Nueva Búsqueda</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        // Base de datos simulada
+        let database = {};
+        let currentUser = null;
+        let currentInspection = {};
+        
+        const motoParts = {
+            'rueda-trasera': 'Rueda Trasera',
+            'rueda-delantera': 'Rueda Delantera',
+            'chasis': 'Chasis',
+            'motor': 'Motor',
+            'tanque': 'Tanque de Combustible',
+            'manillar': 'Manillar',
+            'asiento': 'Asiento',
+            'escape': 'Sistema de Escape',
+            'faros': 'Sistema de Luces',
+            'frenos': 'Sistema de Frenos'
+        };
+        
+        // Datos de ejemplo
+        database['12345678'] = {
+            cedula: '12345678',
+            nombre: 'Ana García',
+            telefono: '+57 300 123 4567',
+            email: 'ana@ejemplo.com',
+            ciudad: 'Medellín',
+            marcaMoto: 'Honda',
+            modeloMoto: 'CB 160F',
+            fechaRegistro: '10/6/2025',
+            inspecciones: []
+        };
+        
+        // Buscar por cédula
+        function searchByCedula() {
+            const cedula = document.getElementById('cedulaInput').value.trim();
+            
+            if (!cedula) {
+                showMessage('⚠️ Por favor ingresa una cédula', 'warning');
+                return;
+            }
+            
+            if (database[cedula]) {
+                // Usuario existe, mostrar inspección
+                currentUser = database[cedula];
+                showInspectionSection();
+            } else {
+                // Usuario no existe, mostrar formulario de registro
+                showRegistrationForm();
+                document.getElementById('userForm').dataset.cedula = cedula;
+            }
+        }
+        
+        // Mostrar formulario de registro
+        function showRegistrationForm() {
+            document.getElementById('registrationForm').classList.remove('hidden');
+            document.getElementById('inspectionSection').classList.add('hidden');
+        }
+        
+        // Mostrar sección de inspección
+        function showInspectionSection() {
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('inspectionSection').classList.remove('hidden');
+            
+            // Mostrar información del usuario
+            document.getElementById('userInfo').innerHTML = `
+                <h3>👤 Usuario: ${currentUser.nombre}</h3>
+                <p><strong>Cédula:</strong> ${currentUser.cedula} | <strong>Teléfono:</strong> ${currentUser.telefono}</p>
+                <p><strong>Moto:</strong> ${currentUser.marcaMoto} ${currentUser.modeloMoto} | <strong>Ciudad:</strong> ${currentUser.ciudad}</p>
+            `;
+            
+            // Inicializar inspección
+            initializeInspection();
+        }
+        
+        // Registrar usuario
+        document.getElementById('userForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const cedula = this.dataset.cedula;
+            const formData = new FormData(this);
+            const userData = {
+                cedula: cedula,
+                fechaRegistro: new Date().toLocaleDateString('es-ES'),
+                inspecciones: []
+            };
+            
+            formData.forEach((value, key) => {
+                userData[key] = value;
+            });
+            
+            // Guardar en base de datos
+            database[cedula] = userData;
+            currentUser = userData;
+            
+            showMessage('✅ Usuario registrado exitosamente', 'success');
+            
+            // Mostrar sección de inspección
+            setTimeout(() => {
+                showInspectionSection();
+            }, 1500);
+        });
+        
+        // Inicializar inspección
+        function initializeInspection() {
+            currentInspection = {};
+            
+            // Restablecer colores de partes
+            Object.keys(motoParts).forEach(partId => {
+                const part = document.getElementById(partId);
+                part.classList.remove('good', 'bad');
+                part.classList.add('neutral');
+                currentInspection[partId] = null;
+            });
+            
+            // Crear lista de controles
+            updatePartStatusList();
+        }
+        
+        // Actualizar lista de estado de partes
+        function updatePartStatusList() {
+            const container = document.getElementById('partStatusList');
+            container.innerHTML = '';
+            
+            Object.entries(motoParts).forEach(([partId, partName]) => {
+                const status = currentInspection[partId];
+                const div = document.createElement('div');
+                div.className = 'part-status';
+                div.innerHTML = `
+                    <span class="part-name">${partName}</span>
+                    <div class="status-buttons">
+                        <button class="status-btn status-good ${status === 'good' ? 'active' : ''}" 
+                                onclick="setPartStatus('${partId}', 'good')">✅ Bueno</button>
+                        <button class="status-btn status-bad ${status === 'bad' ? 'active' : ''}" 
+                                onclick="setPartStatus('${partId}', 'bad')">❌ Malo</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        // Seleccionar parte en el diagrama
+        function selectPart(partId) {
+            const currentStatus = currentInspection[partId];
+            let newStatus;
+            
+            if (currentStatus === null) {
+                newStatus = 'good';
+            } else if (currentStatus === 'good') {
+                newStatus = 'bad';
+            } else {
+                newStatus = 'good';
+            }
+            
+            setPartStatus(partId, newStatus);
+        }
+        
+        // Establecer estado de parte
+        function setPartStatus(partId, status) {
+            currentInspection[partId] = status;
+            
+            const part = document.getElementById(partId);
+            part.classList.remove('good', 'bad', 'neutral');
+            part.classList.add(status);
+            
+            updatePartStatusList();
+        }
+        
+        // Guardar inspección
+        function saveInspection() {
+            const inspection = {
+                fecha: new Date().toLocaleString('es-ES'),
+                resultados: { ...currentInspection }
+            };
+            
+            currentUser.inspecciones.push(inspection);
+            
+            // Calcular estadísticas
+            const total = Object.keys(motoParts).length;
+            const buenos = Object.values(currentInspection).filter(status => status === 'good').length;
+            const malos = Object.values(currentInspection).filter(status => status === 'bad').length;
+            const noEvaluados = total - buenos - malos;
+            
+            showMessage(`
+                ✅ Inspección guardada exitosamente<br>
+                <strong>Resumen:</strong> ${buenos} componentes en buen estado, ${malos} requieren atención, ${noEvaluados} no evaluados
+            `, 'success');
+        }
+        
+        // Nueva búsqueda
+        function newSearch() {
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('inspectionSection').classList.add('hidden');
+            document.getElementById('cedulaInput').value = '';
+            document.getElementById('messages').innerHTML = '';
+            currentUser = null;
+            currentInspection = {};
+        }
+        
+        // Mostrar mensajes
+        function showMessage(message, type) {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-warning';
+            document.getElementById('messages').innerHTML = `
+                <div class="alert ${alertClass}">${message}</div>
+            `;
+        }
+        
+        // Permitir búsqueda con Enter
+        document.getElementById('cedulaInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchByCedula();
+            }
+        });
+    </script>
+</body>
+</html>
