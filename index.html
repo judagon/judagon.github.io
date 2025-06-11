@@ -297,8 +297,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="email">Email:</label>
-                        <input type="email" id="email" name="email" required>
+                        <label for="puesto de trabajo">Puesto de ttrabajo:</label>
+                        <input type="text" id="puesto" name="lugar de trabajo" required>
                     </div>
                     
                     <div class="form-group">
@@ -411,11 +411,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Base de datos simulada (ya no se usará, se comenta o elimina)
-        // let database = {};
-        let currentUser = null;
-        let currentInspection = {};
-        
+       
         const motoParts = {
             'rueda-trasera': 'Rueda Trasera',
             'rueda-delantera': 'Rueda Delantera',
