@@ -397,6 +397,7 @@
     </div>
 
     <script>
+        
         // Configuración de Firebase (reemplaza con tu configuración)
         const firebaseConfig = {
             apiKey: "AIzaSyAHslf1Q-6PwzTcHsEgwp7gMtcJ8MfUTLE",
@@ -411,6 +412,49 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+ import firebase from "firebase/compat/app";
+import "firebase/firestore"; // Requerido para efectos secundarios
+
+// Asegúrate de que esto ya lo tienes inicializado desde el paso anterior
+const firebaseConfig = {
+    // ... tu configuración ...
+};
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// --- Código para probar la conexión ---
+
+// Intentar leer un documento (puede ser uno que exista o no)
+// Usaremos un documento de prueba simple en una colección llamada 'estadoConexion'
+// Puedes cambiar 'estadoConexion' y 'documentoDePrueba' si quieres
+db.collection("estadoConexion").doc("documentoDePrueba").get()
+    .then((doc) => {
+        if (doc.exists) {
+            console.log("¡Conexión exitosa con Firestore y documento encontrado!", doc.data());
+            // Si el documento existe, muestra sus datos
+        } else {
+            console.log("¡Conexión exitosa con Firestore, pero el documento no existe!");
+            // Si el documento no existe, la conexión sigue siendo exitosa,
+            // solo que no encontró lo que buscabas.
+        }
+    })
+    .catch((error) => {
+        // Si algo salió mal durante la comunicación, este bloque se ejecutará.
+        console.error("¡Error al conectar con Firestore o al leer el documento!", error);
+
+        // Puedes inspeccionar 'error.code' para ver el tipo de error.
+        // Por ejemplo:
+        // 'permission-denied': Tus reglas de seguridad no permiten esta operación.
+        // 'unavailable': Problemas de red o el servicio no está disponible temporalmente.
+        // Otros códigos indican diferentes tipos de problemas.
+        if (error.code === 'permission-denied') {
+           console.warn("Parece que tus reglas de seguridad no permiten leer este documento.");
+        } else {
+           console.warn("Otro tipo de error:", error.message);
+        }
+    });
+
+// --- Fin del código para probar la conexión ---
        
         const motoParts = {
             'rueda-trasera': 'Rueda Trasera',
