@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Inspección de Motos</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -270,30 +272,6 @@
     </style>
 </head>
 <body>
-
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyAHslf1Q-6PwzTcHsEgwp7gMtcJ8MfUTLE",
-    authDomain: "prueba-e9c86.firebaseapp.com",
-    projectId: "prueba-e9c86",
-    storageBucket: "prueba-e9c86.firebasestorage.app",
-    messagingSenderId: "249487090177",
-    appId: "1:249487090177:web:388ab97ecebc5afad7d600",
-    measurementId: "G-FVZ9VHNMQ7"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
     <div class="container">
         <h1>🏍️ Sistema de Inspección de Motos</h1>
         
@@ -419,8 +397,22 @@
     </div>
 
     <script>
-        // Base de datos simulada
-        let database = {};
+        // Configuración de Firebase (reemplaza con tu configuración)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAHslf1Q-6PwzTcHsEgwp7gMtcJ8MfUTLE",
+            authDomain: "prueba-e9c86.firebaseapp.com",
+            projectId: "prueba-e9c86",
+            storageBucket: "prueba-e9c86.firebasestorage.app",
+            messagingSenderId: "249487090177",
+            appId: "1:249487090177:web:388ab97ecebc5afad7d600"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Base de datos simulada (ya no se usará, se comenta o elimina)
+        // let database = {};
         let currentUser = null;
         let currentInspection = {};
         
@@ -437,19 +429,6 @@
             'frenos': 'Sistema de Frenos'
         };
         
-        // Datos de ejemplo
-        database['12345678'] = {
-            cedula: '12345678',
-            nombre: 'Ana García',
-            telefono: '+57 300 123 4567',
-            email: 'ana@ejemplo.com',
-            ciudad: 'Medellín',
-            marcaMoto: 'Honda',
-            modeloMoto: 'CB 160F',
-            fechaRegistro: '10/6/2025',
-            inspecciones: []
-        };
-        
         // Buscar por cédula
         function searchByCedula() {
             const cedula = document.getElementById('cedulaInput').value.trim();
@@ -459,15 +438,21 @@
                 return;
             }
             
-            if (database[cedula]) {
-                // Usuario existe, mostrar inspección
-                currentUser = database[cedula];
-                showInspectionSection();
-            } else {
-                // Usuario no existe, mostrar formulario de registro
-                showRegistrationForm();
-                document.getElementById('userForm').dataset.cedula = cedula;
-            }
+            // Buscar en Firestore
+            db.collection("usuarios").doc(cedula).get().then((doc) => {
+                if (doc.exists) {
+                    // Usuario existe
+                    currentUser = doc.data();
+                    showInspectionSection();
+                } else {
+                    // Usuario no existe, mostrar formulario de registro
+                    showRegistrationForm();
+                    document.getElementById('userForm').dataset.cedula = cedula;
+                }
+            }).catch((error) => {
+                console.error("Error al buscar usuario:", error);
+                showMessage('⚠️ Error al buscar usuario', 'warning');
+            });
         }
         
         // Mostrar formulario de registro
@@ -500,24 +485,27 @@
             const formData = new FormData(this);
             const userData = {
                 cedula: cedula,
-                fechaRegistro: new Date().toLocaleDateString('es-ES'),
-                inspecciones: []
+                fechaRegistro: new Date().toISOString(), // Guardamos en formato ISO
+                inspecciones: [] // Inicialmente vacío
             };
             
             formData.forEach((value, key) => {
                 userData[key] = value;
             });
             
-            // Guardar en base de datos
-            database[cedula] = userData;
-            currentUser = userData;
-            
-            showMessage('✅ Usuario registrado exitosamente', 'success');
-            
-            // Mostrar sección de inspección
-            setTimeout(() => {
-                showInspectionSection();
-            }, 1500);
+            // Guardar en Firestore
+            db.collection("usuarios").doc(cedula).set(userData)
+                .then(() => {
+                    currentUser = userData;
+                    showMessage('✅ Usuario registrado exitosamente', 'success');
+                    setTimeout(() => {
+                        showInspectionSection();
+                    }, 1500);
+                })
+                .catch((error) => {
+                    console.error("Error al registrar usuario:", error);
+                    showMessage('⚠️ Error al registrar usuario', 'warning');
+                });
         });
         
         // Inicializar inspección
@@ -542,94 +530,3 @@
             container.innerHTML = '';
             
             Object.entries(motoParts).forEach(([partId, partName]) => {
-                const status = currentInspection[partId];
-                const div = document.createElement('div');
-                div.className = 'part-status';
-                div.innerHTML = `
-                    <span class="part-name">${partName}</span>
-                    <div class="status-buttons">
-                        <button class="status-btn status-good ${status === 'good' ? 'active' : ''}" 
-                                onclick="setPartStatus('${partId}', 'good')">✅ Bueno</button>
-                        <button class="status-btn status-bad ${status === 'bad' ? 'active' : ''}" 
-                                onclick="setPartStatus('${partId}', 'bad')">❌ Malo</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-        
-        // Seleccionar parte en el diagrama
-        function selectPart(partId) {
-            const currentStatus = currentInspection[partId];
-            let newStatus;
-            
-            if (currentStatus === null) {
-                newStatus = 'good';
-            } else if (currentStatus === 'good') {
-                newStatus = 'bad';
-            } else {
-                newStatus = 'good';
-            }
-            
-            setPartStatus(partId, newStatus);
-        }
-        
-        // Establecer estado de parte
-        function setPartStatus(partId, status) {
-            currentInspection[partId] = status;
-            
-            const part = document.getElementById(partId);
-            part.classList.remove('good', 'bad', 'neutral');
-            part.classList.add(status);
-            
-            updatePartStatusList();
-        }
-        
-        // Guardar inspección
-        function saveInspection() {
-            const inspection = {
-                fecha: new Date().toLocaleString('es-ES'),
-                resultados: { ...currentInspection }
-            };
-            
-            currentUser.inspecciones.push(inspection);
-            
-            // Calcular estadísticas
-            const total = Object.keys(motoParts).length;
-            const buenos = Object.values(currentInspection).filter(status => status === 'good').length;
-            const malos = Object.values(currentInspection).filter(status => status === 'bad').length;
-            const noEvaluados = total - buenos - malos;
-            
-            showMessage(`
-                ✅ Inspección guardada exitosamente<br>
-                <strong>Resumen:</strong> ${buenos} componentes en buen estado, ${malos} requieren atención, ${noEvaluados} no evaluados
-            `, 'success');
-        }
-        
-        // Nueva búsqueda
-        function newSearch() {
-            document.getElementById('registrationForm').classList.add('hidden');
-            document.getElementById('inspectionSection').classList.add('hidden');
-            document.getElementById('cedulaInput').value = '';
-            document.getElementById('messages').innerHTML = '';
-            currentUser = null;
-            currentInspection = {};
-        }
-        
-        // Mostrar mensajes
-        function showMessage(message, type) {
-            const alertClass = type === 'success' ? 'alert-success' : 'alert-warning';
-            document.getElementById('messages').innerHTML = `
-                <div class="alert ${alertClass}">${message}</div>
-            `;
-        }
-        
-        // Permitir búsqueda con Enter
-        document.getElementById('cedulaInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchByCedula();
-            }
-        });
-    </script>
-</body>
-</html>
